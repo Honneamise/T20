@@ -1,6 +1,6 @@
 # TEDDY
 
-Teddy is a single header utility to print and read strings on a rendered Opengl surface.
+Teddy is a single header utility to print and read strings on a rendered Opengl window.
 ___
 ## void TeddyInit(int rows, int cols, int color, char *font_file)
 
