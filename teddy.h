@@ -11,6 +11,8 @@ void TeddyClear();
 
 void TeddyAddLine(char *str);
 
+void TeddyAddMultiLine(char *str);
+
 char *TeddyReadLine();
 
 #ifdef TEDDY
@@ -817,6 +819,23 @@ void TeddyAddLine(char *str)
     strncpy(p,str,teddy->cols);
 
     TeddyRender(1);
+}
+
+/**********/
+void TeddyAddMultiLine(char *str)
+{
+    int len = strlen(str);
+    char *ptr = str;
+
+    for(int i=0;i<len/teddy->cols;i++)
+    {
+        TeddyAddLine(ptr);
+
+        ptr += teddy->cols;
+    }
+
+    if(len%teddy->cols != 0) {  TeddyAddLine(ptr); }
+
 }
 
 /**********/
