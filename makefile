@@ -13,3 +13,7 @@ example1:
 example2:
 	$(CC) $(CFLAGS) example2.c $(LDFLAGS) -o $@.bin
 
+debug: clean example1
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s ./example1.bin
+
+

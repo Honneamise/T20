@@ -54,10 +54,8 @@ typedef struct Teddy
     int rows;
     int cols;
 
-    int cx;
-    int cy;
-    char *terminal;  
-
+    char *prompt;
+    int prompt_pos;
     int prompt_typing;
     int prompt_ready;
     
@@ -317,7 +315,8 @@ static void TeddyOpenglClose();
 static void TeddyBufferLoad(char *file, unsigned char **buffer, int *size);
 static void TeddyInitGlyphs(const unsigned char *font);
 static void TeddyDrawChar(char c, int row, int col);
-static void TeddyRender(int copy);
+static void TeddyUpdatePrompt();
+static void TeddyRender();
 
 /********/
 /* GLFW */
@@ -349,7 +348,7 @@ static void TeddyGlfwResizeCallback(GLFWwindow *window, int width, int height)
 		
     glViewport(x, y, view_w, view_h);	
 
-    TeddyRender(1);
+    TeddyRender();
 
 }
 
@@ -365,11 +364,12 @@ static void TeddyGlfwKeyCallback(GLFWwindow *window,  int key, int scancode, int
     switch (key)
     {
         case GLFW_KEY_BACKSPACE:
-            if(teddy->cx>0) 
+            if(teddy->prompt_pos>0) 
             { 
-                teddy->cx--;
-                teddy->terminal[teddy->cy*teddy->cols+teddy->cx] = 0;
-                TeddyRender(1);
+                teddy->prompt_pos--;
+                teddy->prompt[teddy->prompt_pos] = 0;
+                TeddyUpdatePrompt();
+                TeddyRender();
             }      
             break;
         
@@ -392,11 +392,12 @@ static void TeddyGlfwCharCallback(GLFWwindow *window, unsigned int codepoint)
 {
     assert(window);
 
-    if(codepoint < 0xFF && teddy->cx<teddy->cols-1)
+    if(codepoint < 0xFF && teddy->prompt_pos<teddy->cols-1)
     {
-        teddy->terminal[ teddy->cy*teddy->cols + teddy->cx] = (char)codepoint;
-        teddy->cx++;
-        TeddyRender(1);
+        teddy->prompt[teddy->prompt_pos] = (char)codepoint;
+        teddy->prompt_pos++;
+        TeddyUpdatePrompt();
+        TeddyRender();
     }
 }
 
@@ -696,18 +697,28 @@ static void TeddyDrawChar(char c, int row, int col)
 }
 
 /**********/
-static void TeddyRender(int copy)
+static void TeddyUpdatePrompt()
+{
+    int line_size = teddy->cols*teddy->glyph_w*teddy->glyph_h;
+
+    unsigned char *p = teddy->texture_buffer;
+
+    p += line_size * (teddy->rows-1);
+
+    memset(p,0x00,line_size);
+
+    for(size_t i=0;i<strlen(teddy->prompt);i++)
+    {
+        TeddyDrawChar(teddy->prompt[i],teddy->rows-1,i);
+    }
+
+}
+
+/**********/
+static void TeddyRender()
 {
     glClear(GL_COLOR_BUFFER_BIT);
     
-    if(copy)
-    {
-        for(int count=0;count<teddy->rows*teddy->cols;count++)
-        {
-            TeddyDrawChar( teddy->terminal[count], count/teddy->cols, count%teddy->cols);
-        }
-    }
-
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, teddy->texture_w, teddy->texture_h, GL_RED, GL_UNSIGNED_BYTE, teddy->texture_buffer);
 
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -725,11 +736,8 @@ void TeddyInit(int rows, int cols, int color, char *font_file)
     teddy->rows = rows;
     teddy->cols = cols;
 
-    teddy->cx = 0;
-    teddy->cy = rows-1;
-    
-    teddy->terminal = calloc(rows*cols,sizeof(char));
-    assert(teddy->terminal);
+    teddy->prompt = calloc(cols,sizeof(char));
+    assert(teddy->prompt);
 
     teddy->color = color;
 
@@ -764,7 +772,7 @@ void TeddyInit(int rows, int cols, int color, char *font_file)
 
     TeddyOpenglInit();    
 
-    TeddyRender(1);
+    TeddyRender();
 }
 
 /**********/
@@ -779,7 +787,7 @@ void TeddyClose()
         free(teddy->glyphs[count]);
     }
 
-    free(teddy->terminal);
+    free(teddy->prompt);
 
     free(teddy->glyphs);
 
@@ -799,30 +807,42 @@ int TeddyRun()
 /**********/
 void TeddyClear()
 {
-    memset(teddy->terminal,0x00,teddy->rows*teddy->cols);
+    int line_size = teddy->cols*teddy->glyph_w*teddy->glyph_h;
 
-    TeddyRender(1);
+    memset(teddy->texture_buffer,0x00,(teddy->rows-1)*line_size);
+
+    TeddyRender();
 }
 
 /**********/
 void TeddyAddLine(char *str)
 {
-    char *p = teddy->terminal;
+    int line_size = teddy->cols*teddy->glyph_w*teddy->glyph_h;
+
+    unsigned char *src = teddy->texture_buffer + line_size;
+    unsigned char *dst = teddy->texture_buffer;
 
     for(int i=0;i<teddy->rows-2;i++)
     {
-        memcpy(p,p+teddy->cols,teddy->cols);
-
-        p += teddy->cols;
+        memcpy(dst,src,line_size);
+        src += line_size;
+        dst += line_size;
     }
 
-    strncpy(p,str,teddy->cols);
+    memset(dst,0x00,line_size);
 
-    TeddyRender(1);
+    size_t limit = ( strlen(str) < (size_t)teddy->cols ) ? strlen(str) : (size_t)teddy->cols;
+
+    for(size_t i=0;i<limit;i++)//CHECK LEN
+    {
+        TeddyDrawChar(str[i],teddy->rows-2,i);
+    }
+
+    TeddyRender();
 }
 
 /**********/
-void TeddyAddMultiLine(char *str)
+void TeddyAddMultiLine(char *str)//REDO !!!
 {
     int len = strlen(str);
     char *ptr = str;
@@ -855,17 +875,19 @@ char *TeddyReadLine()
 
         if(teddy->prompt_ready)
         {
-            char *str = calloc(teddy->cols+1,sizeof(char));
+            char *str = calloc(strlen(teddy->prompt)+1,sizeof(char));
 
-            strncpy(str,&teddy->terminal[(teddy->rows-1)*teddy->cols],teddy->cols);
+            strcpy(str,teddy->prompt);
            
-            memset(&teddy->terminal[(teddy->rows-1)*teddy->cols],0x00,teddy->cols);
+            memset(teddy->prompt,0x00,teddy->cols);
 
             teddy->prompt_ready=0;
 
-            teddy->cx = 0;
+            teddy->prompt_pos = 0;
 
-            TeddyRender(1);
+            TeddyUpdatePrompt();
+
+            TeddyRender();
 
             teddy->prompt_typing = 0;
 
@@ -877,9 +899,9 @@ char *TeddyReadLine()
         {
             blink = (blink==0) ? 0xDB : 0;
 
-            TeddyDrawChar(blink,teddy->cy,teddy->cx);
+            TeddyDrawChar(blink,(teddy->rows-1),teddy->prompt_pos);
             
-            TeddyRender(0);
+            TeddyRender();
 
             blink_time = glfwGetTime();
         }
