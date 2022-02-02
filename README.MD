@@ -129,3 +129,10 @@ https://github.com/viler-int10h/vga-text-mode-fonts
 Teddy has been tested with the following flags on Valgrind :
 
 valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes
+
+---
+**TSIL ODOT :**
+
+- remove assert and use an error function
+
+
