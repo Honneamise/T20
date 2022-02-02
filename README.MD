@@ -29,7 +29,16 @@ Clear the current content area (NOT the prompt)
 ---
 ## void TeddyAddLine(char *str)
 
+Add a line to the current content area, all previous lines will be moved up by one line.
+If the length of str is > number of cols, str will be truncated.
+
+**str** : string to add
+
+---
+## void TeddyAddMultiLine(char *str)
+
 Add a line to the current content area, all previous lines will be moved up by one
+If the length of str is > number of cols, str will be splitted to multiple lines.
 
 **str** : string to add
 
