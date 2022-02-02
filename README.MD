@@ -45,7 +45,7 @@ If the length of str is > number of cols, str will be splitted to multiple lines
 ---
 ## char *TeddyReadLine()
 
-Returns a pointer to a copy copy of the prompt and clear it
+Returns a pointer to a copy of the prompt and clear it
 
 **Note** : This function will not return until ENTER is pressed.\
 If the user has requested to exit, this function will return NULL.
