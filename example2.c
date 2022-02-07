@@ -1,24 +1,24 @@
 //std
-#include "stdlib.h"
 #include "unistd.h"
 
-//stuff
-#define TEDDY
-#include "teddy.h"
+//T20
+#include "T20/T20.h"
 
 //main
 int main(void)
 {
-    TeddyInit(40, 80, 0x00FF00, NULL);
+    T20Init(40, 80, 0);
 
-    while(TeddyRun())
+    T20Colors(0xFFFFFF, 0x0000FF, 0x000000);
+
+    while(T20Run())
     {
         sleep(1);
 
-        TeddyAddLine("test");
+        T20AddLine("test");
     }
 
-    TeddyClose();
+    T20Close();
 
     return 0;
 }

@@ -1,27 +1,28 @@
 //std
-#include "stdio.h"
+#include "stdlib.h"
 
-//stuff
-#define TEDDY
-#include "teddy.h"
+//T20
+#include "T20/T20.h"
 
 //main
 int main()
 {
-    TeddyInit(40, 80, 0x00FF00, NULL);
+    T20Init(40, 60, NULL);
+
+    T20Colors(0xFFFFFF, 0x0000FF, 0x000000);
 
     while(1)
     {
-        char *str = TeddyReadLine();
+        char *str = T20ReadLine();
         
-        if(str==NULL) { break; }
+        if(!str) { break; }
 
-        TeddyAddLine(str);
+        T20AddLine(str);
 
         free(str);
     }
 
-    TeddyClose();
+    T20Close();
 
     return 0;
 }

@@ -1,53 +1,72 @@
-# TEDDY
+# T20
 
-Teddy is a single header utility to print and read strings on a rendered Opengl window.
-___
-## void TeddyInit(int rows, int cols, int color, char *font_file)
+T20 is a two files utility to print and read strings on a rendered Opengl window.
+
+<br>
+
+![image](T20.png)
+
+<br>
+
+---
+## void T20Init(int rows, int cols, char *font_file)
 
 Initialization function
 
-**rows** : number of rows\
-**cols** : number of cols\
-**color** : characters color in RGB format (ex: 0XAABBFF)\
+**rows** : number of rows<br>
+**cols** : number of cols<br>
 **font_file** : optional font file, if NULL the builtin font will be used
 
----
-## void TeddyClose()
-
-Closing function
+<br>
 
 ---
-## int TeddyRun()
+## void T20Close()
+
+Closing function, deallocate internal structures
+
+<br>
+
+---
+## void T20Colors(int fgcolor, int bgcolor, int ctxcolor)
+
+Set the desired colors in RGB format (ex: 0XAABBFF)
+
+**fgcolor** : color of the font<br>
+**bgcolor** : background color of the font<br>
+**ctxcolor** : color of the fill bars if needed <br>
+
+<br>
+
+---
+## int T20Run()
 
 Return 0 if user requested quit (ESC key or closing window), 1 otherwise
 
+<br>
+
 ---
-## void TeddyClear()
+## void T20Clear()
 
 Clear the current content area (NOT the prompt)
 
----
-## void TeddyAddLine(char *str)
-
-Add a line to the current content area, all previous lines will be moved up by one line.
-If the length of str is > number of cols, str will be truncated.
-
-**str** : string to add
+<br>
 
 ---
-## void TeddyAddMultiLine(char *str)
+## void T20AddLine(char *str)
 
 Add a line to the current content area, all previous lines will be moved up by one
-If the length of str is > number of cols, str will be splitted to multiple lines.
+If the length of str is > number of cols, str will be splitted into multiple lines.
 
 **str** : string to add
 
+<br>
+
 ---
-## char *TeddyReadLine()
+## char *T20ReadLine()
 
 Returns a pointer to a copy of the prompt and clear it
 
-**Note** : This function will not return until ENTER is pressed.\
+**Note** : This function will not return until user press ENTER.\
 If the user has requested to exit, this function will return NULL.
 
 <br>
@@ -59,29 +78,30 @@ Program to read from the prompt and mirror in the content area until the user ha
 
 ```
 //std
-#include "stdio.h"
+#include "stdlib.h"
 
-//stuff
-#define TEDDY
-#include "teddy.h"
+//T20
+#include "T20/T20.h"
 
 //main
 int main()
 {
-    TeddyInit(40, 80, 0x00FF00, NULL);
+    T20Init(40, 80, NULL);
+
+    T20Colors(0xFFFFFF, 0x0000FF, 0x000000);
 
     while(1)
     {
-        char *str = TeddyReadLine();
+        char *str = T20ReadLine();
         
-        if(str==NULL) { break; }
+        if(!str) { break; }
 
-        TeddyAddLine(str);
+        T20AddLine(str);
 
         free(str);
     }
 
-    TeddyClose();
+    T20Close();
 
     return 0;
 }
@@ -91,26 +111,26 @@ Program to continuously print on the content area until the user has requested t
 
 ```
 //std
-#include "stdlib.h"
 #include "unistd.h"
 
-//stuff
-#define TEDDY
-#include "teddy.h"
+//T20
+#include "T20/T20.h"
 
 //main
 int main(void)
 {
-    TeddyInit(40, 80, 0x00FF00, NULL);
+    T20Init(40, 80, 0);
 
-    while(TeddyRun())
+    T20Colors(0xFFFFFF, 0x0000FF, 0x000000);
+
+    while(T20Run())
     {
         sleep(1);
 
-        TeddyAddLine("test");
+        T20AddLine("test");
     }
 
-    TeddyClose();
+    T20Close();
 
     return 0;
 }
@@ -119,20 +139,16 @@ int main(void)
 ---
 **Note on fonts :**
 
-Teddy supports all the 1760 fonts availables here :
+T20 supports all the 1760 fonts availables here :
 
 https://github.com/viler-int10h/vga-text-mode-fonts
 
 ---
 **Note on tests :**
 
-Teddy has been tested with the following flags on Valgrind :
+T20 has been tested with the following flags on Valgrind :
 
 valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes
 
----
-**TSIL ODOT :**
-
-- remove assert and use an error function
 
 
