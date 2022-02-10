@@ -9,7 +9,7 @@ T20 is a two files utility to print and read strings on a rendered Opengl window
 <br>
 
 ---
-## void T20Init(int rows, int cols, char *font_file)
+__void T20Init(int rows, int cols, char *font_file)__
 
 Initialization function
 
